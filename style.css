@@ -1,0 +1,183 @@
+/* --- THAY THẾ TOÀN BỘ FILE STYLE.CSS --- */
+
+/* Thiết lập cơ bản */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    overflow: hidden; 
+}
+
+.test-container {
+    display: flex;
+    max-width: 1400px;
+    margin: auto;
+    background: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    height: 92vh; 
+}
+
+/* Định dạng chung cho 2 cột */
+.column {
+    flex: 1;
+    height: 92vh; 
+    overflow-y: auto; 
+}
+
+#question-display-area {
+    border-right: 1px solid #e0e0e0;
+}
+#answer-panel {
+    background-color: #f9f9f9;
+}
+.content-wrapper {
+    padding: 20px 30px;
+}
+
+/* --- CỘT TRÁI: NỘI DUNG CÂU HỎI --- */
+#question-content-left .question-image {
+    max-width: 100%;
+    max-height: 400px;
+    height: auto;
+    display: block;
+    margin: 0 auto 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+#question-content-left .question-text {
+    font-size: 1.2em;
+    font-weight: bold;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+.options-text-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+.options-text-list li {
+    background-color: #fff;
+    border: 1px solid #eee;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    line-height: 1.4;
+    cursor: default; 
+}
+
+/* --- CỘT PHẢI: BẢNG ĐIỀU KHIỂN --- */
+
+/* Bảng điều hướng câu hỏi (Palette) */
+#question-palette {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.palette-item {
+    font-size: 1em;
+    font-weight: bold;
+    padding: 10px 5px;
+    text-align: center;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.palette-item.unanswered {
+    background: #fff;
+    border: 1px solid #007bff;
+    color: #007bff;
+}
+.palette-item.unanswered:hover { background: #e6f2ff; }
+.palette-item.answered {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    color: #555;
+}
+.palette-item.answered:hover { background: #e0e0e0; }
+.palette-item.active {
+    background: #007bff;
+    border-color: #007bff;
+    color: white;
+    transform: scale(1.05);
+}
+
+/* === STYLE MỚI CHO NÚT BẤM === */
+#navigation-area {
+    display: flex;
+    justify-content: flex-end; /* Đẩy nút sang bên phải */
+    margin-bottom: 20px;
+}
+.nav-button {
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    color: white;
+}
+.next-btn {
+    background-color: #007bff; /* Màu xanh */
+}
+.next-btn:hover {
+    background-color: #0056b3;
+}
+.submit-button {
+    background-color: #dc3545; /* Màu đỏ */
+}
+.submit-button:hover {
+    background-color: #c82333;
+}
+/* Class để ẩn/hiện bằng JS */
+.hidden {
+    display: none;
+}
+/* === HẾT STYLE MỚI === */
+
+
+.divider {
+    border: 0;
+    border-top: 1px solid #ddd;
+    margin: 25px 0;
+}
+
+/* Khu vực chọn A, B, C, D */
+#answer-sheet-area .option {
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+#answer-sheet-area .option:hover { background-color: #f4f4f4; }
+#answer-sheet-area .option.selected {
+    background-color: #d0e6f5;
+    border-color: #007bff;
+    color: #004a99;
+}
+
+/* --- STYLE CHO MÀN HÌNH REVIEW --- */
+.option.disabled { cursor: not-allowed; color: #555; }
+.option.option-correct {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+    font-weight: bold;
+}
+.option.option-incorrect {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+    font-weight: bold;
+}
+.question-item { margin-bottom: 25px; }
+.question-item p { font-weight: bold; font-size: 1.1em; }
