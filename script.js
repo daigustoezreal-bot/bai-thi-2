@@ -54,26 +54,43 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- BIẾN TRẠNG THÁI ---
     let currentQuestionIndex = 0; 
     let userAnswers = new Array(allQuestions.length).fill(null);
+    let inReviewMode = false; // Biến mới: Xác định chế độ xem lại
 
     // --- LẤY CÁC THÀNH PHẦN GIAO DIỆN ---
     const questionDisplayArea = document.getElementById('question-content-left');
     const answerSheetArea = document.getElementById('answer-sheet-area');
     const questionPalette = document.getElementById('question-palette');
-    
-    // Lấy 2 nút mới
     const submitBtn = document.getElementById('submit-btn');
     const nextQuestionBtn = document.getElementById('next-question-btn');
+    const navigationArea = document.getElementById('navigation-area');
 
 
-    // --- HÀM (1): VẼ BẢNG ĐIỀU HƯỚNG (PALETTE) ---
+    // --- HÀM (1): VẼ BẢNG ĐIỀU HƯỚNG (PALETTE) (ĐÃ CẬP NHẬT) ---
     function renderPalette() {
         questionPalette.innerHTML = ''; 
         allQuestions.forEach((q, index) => {
             const questionNumber = index + 1;
-            let statusClass = (userAnswers[index] === null) ? 'unanswered' : 'answered';
+            let statusClass = '';
+
+            if (inReviewMode) {
+                // Nếu ở chế độ xem lại -> Tô màu ĐÚNG/SAI
+                const correctAnswer = allQuestions[index].answer;
+                const userAnswer = userAnswers[index];
+                if (userAnswer === correctAnswer) {
+                    statusClass = 'correct'; // Xanh
+                } else {
+                    statusClass = 'incorrect'; // Đỏ
+                }
+            } else {
+                // Nếu ở chế độ làm bài -> Tô màu ĐÃ TRẢ LỜI / CHƯA
+                statusClass = (userAnswers[index] === null) ? 'unanswered' : 'answered';
+            }
+            
+            // Đánh dấu câu đang xem
             if (index === currentQuestionIndex) {
                 statusClass += ' active';
             }
+
             const paletteItem = `
                 <div class="palette-item ${statusClass}" data-index="${index}">
                     ${questionNumber}
@@ -83,15 +100,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- HÀM (2): VẼ CÂU HỎI (ĐÃ CẬP NHẬT LOGIC NÚT BẤM) ---
+    // --- HÀM (2): VẼ CÂU HỎI (ĐÃ CẬP NHẬT) ---
     function renderQuestion(index) {
         currentQuestionIndex = index;
         const q = allQuestions[index];
+        const correctAnswer = q.answer;
+        const userAnswer = userAnswers[index];
         
         // A. Render CỘT TRÁI (Hiển thị)
         let imageHTML = q.image ? `<img src="${q.image}" alt="Nội dung câu hỏi" class="question-image">` : '';
         const questionTextHTML = `<p class="question-text">${q.question}</p>`;
-        const optionsTextHTML = q.options.map(option => `<li>${option}</li>`).join('');
+        
+        // Logic tô màu cho cột trái (nếu ở review mode)
+        const optionsTextHTML = q.options.map((option) => {
+            const optionLetter = option[0]; // 'A', 'B', 'C', 'D'
+            let optionClass = '';
+            
+            if (inReviewMode) {
+                if (optionLetter === correctAnswer) {
+                    optionClass = 'option-correct'; // Xanh
+                } else if (optionLetter === userAnswer) {
+                    optionClass = 'option-incorrect'; // Đỏ
+                }
+            }
+            return `<li class="${optionClass}">${option}</li>`;
+        }).join('');
         
         questionDisplayArea.innerHTML = `
             ${imageHTML}
@@ -102,71 +135,49 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         // B. Render CỘT PHẢI (Ô chọn A,B,C,D)
-        const savedAnswer = userAnswers[index]; 
         const answerOptions = ['A', 'B', 'C', 'D'];
-        answerSheetArea.innerHTML = answerOptions.map(optionLetter => `
-            <li 
-                class="option ${savedAnswer === optionLetter ? 'selected' : ''}" 
-                data-option-value="${optionLetter}"
-            >
-                ${optionLetter}
-            </li>
-        `).join('');
+        answerSheetArea.innerHTML = answerOptions.map(optionLetter => {
+            let optionClass = 'option';
+            
+            if (inReviewMode) {
+                // Vô hiệu hóa và tô màu
+                optionClass += ' disabled';
+                if (optionLetter === correctAnswer) {
+                    optionClass += ' option-correct';
+                } else if (optionLetter === userAnswer) {
+                    optionClass += ' option-incorrect';
+                }
+            } else {
+                // Chế độ làm bài: chỉ tô màu 'selected'
+                if (userAnswer === optionLetter) {
+                    optionClass += ' selected';
+                }
+            }
+            
+            return `
+                <li class="${optionClass}" data-option-value="${optionLetter}">
+                    ${optionLetter}
+                </li>
+            `;
+        }).join('');
 
         // C. Cập nhật lại Palette
         renderPalette();
 
-        // === D. LOGIC MỚI: HIỂN THỊ NÚT BẤM TƯƠNG ỨNG ===
-        if (currentQuestionIndex === allQuestions.length - 1) {
-            // Đây là câu cuối cùng
-            nextQuestionBtn.classList.add('hidden'); // Ẩn nút "Câu tiếp"
-            submitBtn.classList.remove('hidden'); // Hiện nút "Nộp bài"
-        } else {
-            // Đây không phải câu cuối
-            nextQuestionBtn.classList.remove('hidden'); // Hiện nút "Câu tiếp"
-            submitBtn.classList.add('hidden'); // Ẩn nút "Nộp bài"
+        // D. Ẩn/Hiện nút (Chỉ khi KHÔNG ở review mode)
+        if (!inReviewMode) {
+            if (currentQuestionIndex === allQuestions.length - 1) {
+                nextQuestionBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextQuestionBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
         }
     }
 
-    // --- HÀM (3): HIỂN THỊ REVIEW (Giữ nguyên) ---
-    function showReview(score, totalQuestions) {
-        const reviewHTML = `
-            <div class="content-wrapper" style="padding: 30px;">
-                <h2>Kết quả bài thi</h2>
-                <p style="font-size: 1.2em;">
-                    Bạn đã trả lời đúng: 
-                    <b>${score} / ${totalQuestions}</b> câu.
-                </p>
-                <hr>
-            </div>
-        `;
-        const leftColumn = document.getElementById('question-display-area');
-        leftColumn.innerHTML = reviewHTML;
-        document.getElementById('answer-panel').innerHTML = ''; // Xóa cột phải
-        leftColumn.style.borderRight = 'none';
-
-        allQuestions.forEach((q, index) => {
-            const correctAnswer = q.answer;
-            const userAnswer = userAnswers[index];
-            let imageHTML = q.image ? `<img src="${q.image}" alt="Nội dung câu hỏi" class="question-image">` : '';
-            const optionsHTML = q.options.map((option) => {
-                const optionLetter = option[0];
-                let optionClass = 'option disabled'; 
-                if (optionLetter === correctAnswer) optionClass += ' option-correct';
-                else if (optionLetter === userAnswer) optionClass += ' option-incorrect';
-                return `<li class="${optionClass}">${option}</li>`;
-            }).join('');
-            const questionHTML = `
-                <div class="question-item" style="padding: 0 30px;">
-                    ${imageHTML}
-                    <p>${q.question}</p>
-                    <ul class="options-list" style="padding:0;">${optionsHTML}</ul>
-                </div>
-            `;
-            leftColumn.innerHTML += questionHTML;
-        });
-    }
-
+    // --- HÀM (3): BỎ (Không cần hàm showReview() nữa) ---
+    
     // --- XỬ LÝ SỰ KIỆN (EVENT LISTENERS) ---
 
     // 1. Click vào Bảng điều hướng (Palette)
@@ -178,8 +189,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 2. Click vào đáp án A, B, C, D
+    // 2. Click vào đáp án A, B, C, D (Thêm kiểm tra review mode)
     answerSheetArea.addEventListener('click', (event) => {
+        // Nếu đang ở review mode, không làm gì cả
+        if (inReviewMode) return; 
+
         const selectedOption = event.target.closest('.option');
         if (selectedOption) {
             const optionValue = selectedOption.dataset.optionValue;
@@ -191,8 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. Click nút "Nộp bài"
+    // 3. Click nút "Nộp bài" (ĐÃ CẬP NHẬT HOÀN TOÀN)
     submitBtn.addEventListener('click', () => {
+        // 1. Kiểm tra câu chưa trả lời
         const firstUnansweredIndex = userAnswers.findIndex(answer => answer === null);
         if (firstUnansweredIndex !== -1) {
             const questionNumber = firstUnansweredIndex + 1;
@@ -201,18 +216,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!userConfirmed) return; 
         }
 
+        // 2. Tính điểm
         let score = 0;
         const totalQuestions = allQuestions.length;
         allQuestions.forEach((question, index) => {
             if (userAnswers[index] === question.answer) score++; 
         });
 
-        showReview(score, totalQuestions);
+        // 3. Kích hoạt chế độ REVIEW MODE
+        inReviewMode = true; 
+        
+        // 4. Ẩn các nút điều hướng
+        navigationArea.innerHTML = `<h3>Kết quả: ${score} / ${totalQuestions}</h3>`;
+
+        // 5. Render lại câu hỏi hiện tại (để áp dụng style review)
+        renderQuestion(currentQuestionIndex);
+        
+        // 6. Cảnh báo kết quả (vẫn giữ alert cho rõ)
+        alert(`Bạn đã hoàn thành bài thi! \nĐiểm số: ${score} / ${totalQuestions}`);
     });
 
-    // 4. === EVENT MỚI: CLICK NÚT "CÂU HỎI TIẾP THEO" ===
+    // 4. Click nút "Câu hỏi tiếp theo"
     nextQuestionBtn.addEventListener('click', () => {
-        // Chỉ cần gọi hàm render câu tiếp theo
         renderQuestion(currentQuestionIndex + 1);
     });
 
